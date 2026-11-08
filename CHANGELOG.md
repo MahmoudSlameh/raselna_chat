@@ -1,9 +1,9 @@
 ## 0.1.1
 
-- Smaller package: screenshots, goldens and tooling are no longer shipped (archive 1 MB → 460 KB); README images load from GitHub.
-- pub.dev metadata: description, platforms (Android, iOS, Web), screenshots, repository and issue tracker.
-- `flutter_secure_storage` allows `>=9.2.0 <12.0.0`.
-- Automated publishing from GitHub Actions on `v*` tags.
+- Automated publishing: pushing a `v*` tag publishes to pub.dev from GitHub Actions with pub.dev's OIDC login (no stored token). See "Releasing" in the README.
+- Smaller archive (about 460 KB, was about 1 MB): `.pubignore` leaves out the full-size screenshots, the golden test images and the screenshot tooling. README images now use absolute URLs so they still show on pub.dev.
+- pub.dev metadata: declared platforms (Android, iOS, web), two screenshots, shorter description.
+- Allow `flutter_secure_storage` 10.x and 11.x.
 
 ## 0.1.0
 

@@ -13,10 +13,12 @@ An Arabic-first chat for Flutter apps. You add your publishable key, and your ap
 ```yaml
 # pubspec.yaml
 dependencies:
-  raselna_chat: ^0.1.0
+  raselna_chat: ^0.1.1
 ```
 
-Or straight from GitHub (before a release reaches pub.dev, or to try `main`):
+Or run `flutter pub add raselna_chat`. [![pub package](https://img.shields.io/pub/v/raselna_chat.svg)](https://pub.dev/packages/raselna_chat)
+
+To try unreleased changes from `main`:
 
 ```yaml
 dependencies:
@@ -173,7 +175,7 @@ cd example && flutter build web && cd .. && node tool/capture.cjs   # screenshot
 
 Releases go to pub.dev from GitHub Actions (`.github/workflows/publish.yml`), with pub.dev's OIDC login, so no token is stored anywhere.
 
-1. One time, on pub.dev: *raselna_chat › Admin › Automated publishing*: enable GitHub Actions, repository `MahmoudSlameh/raselna_chat`, tag pattern `v{{version}}` (and optionally require the `pub.dev` environment). The very first version must be published by hand (`flutter pub publish`) to create the package.
+1. One time, on pub.dev: *raselna_chat › Admin › Automated publishing*: enable GitHub Actions, repository `MahmoudSlameh/raselna_chat`, tag pattern `v{{version}}` (and optionally require the `pub.dev` environment). (0.1.0 was published by hand, which created the package; from 0.1.1 on, tags publish.)
 2. Bump `version` in `pubspec.yaml` and `raselnaSdkVersion` in `lib/src/version.dart`, add a `CHANGELOG.md` entry, and commit.
 3. `git tag v0.1.1 && git push origin v0.1.1`. The workflow checks that the tag matches the pubspec version, runs analyze, format and tests, then publishes.
 
