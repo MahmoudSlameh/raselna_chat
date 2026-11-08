@@ -11,12 +11,12 @@ An Arabic-first chat for Flutter apps. You add your publishable key, and your ap
 ## Setup in three lines
 
 ```yaml
-# pubspec.yaml (pub.dev release coming soon; use the GitHub tag for now)
+# pubspec.yaml (pub.dev release coming soon; install from GitHub for now)
 dependencies:
   raselna_chat:
     git:
       url: https://github.com/MahmoudSlameh/raselna_chat
-      ref: v0.1.0
+      ref: main
 ```
 
 ```dart
