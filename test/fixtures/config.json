@@ -1,0 +1,21 @@
+{
+  "bot_name": "فرن الياسمين",
+  "status_text": "خبز وحلويات طازة كل يوم",
+  "initial": "ف",
+  "logo_url": "https://yasmin.raselna.com/brand/logo",
+  "cover_url": null,
+  "pattern": "stars",
+  "powered_by": true,
+  "powered_by_url": "https://raselna.com",
+  "support_phone": "+963991234567",
+  "colors": {
+    "primary": "#b4441a",
+    "primary_fg": "#ffffff",
+    "primary_strong": "#9a3a16",
+    "primary_tint": "#fbf3f0",
+    "primary_dark": "#f0a685",
+    "primary_edge": "#b4441a"
+  },
+  "features": { "resume": true, "push": false },
+  "environment": "test"
+}

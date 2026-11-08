@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>raselna_chat promo</title>
+<style>
+  @font-face { font-family: Tajawal; src: url(../fonts/Tajawal-Regular.ttf); font-weight: 400; }
+  @font-face { font-family: Tajawal; src: url(../fonts/Tajawal-Medium.ttf); font-weight: 500; }
+  @font-face { font-family: Tajawal; src: url(../fonts/Tajawal-Bold.ttf); font-weight: 700; }
+  :root {
+    --ink: #202060;
+    --ink-deep: #14143f;
+    --indigo: #4B4BC8;
+    --saffron: #FAB048;
+    --paper: #F4F4FB;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1080px; height: 1350px; overflow: hidden; }
+  body {
+    font-family: Tajawal, sans-serif;
+    color: #fff;
+    background:
+      radial-gradient(900px 600px at 85% -10%, rgba(75,75,200,.55), transparent 60%),
+      radial-gradient(700px 500px at 0% 105%, rgba(75,75,200,.35), transparent 60%),
+      var(--ink);
+    position: relative;
+  }
+  .stars { position: absolute; inset: 0; opacity: .07; }
+  header { position: absolute; top: 64px; inset-inline: 72px; }
+  .brand { display: flex; align-items: center; gap: 14px; direction: ltr; justify-content: flex-end; }
+  .brand .pkg { font: 700 64px/1 Tajawal, sans-serif; letter-spacing: -.5px; }
+  .brand .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--saffron); }
+  .brand .fl { font: 500 64px/1 Tajawal, sans-serif; color: #c9c9f4; }
+  .tag { margin-top: 22px; font: 500 38px/1.45 Tajawal, sans-serif; color: #e6e6fb; }
+  .tag b { font-weight: 700; color: #fff; box-shadow: inset 0 -12px 0 rgba(250,176,72,.45); }
+  .phones { position: absolute; top: 300px; inset-inline: 0; height: 690px; }
+  .phone {
+    position: absolute; width: 300px; height: 650px; border-radius: 44px; padding: 10px;
+    background: #0b0b22; box-shadow: 0 30px 60px -20px rgba(0,0,0,.6), 0 0 0 1.5px rgba(255,255,255,.12);
+  }
+  .phone img { width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: 35px; display: block; }
+  .p1 { left: 70px; top: 50px; transform: rotate(-4deg); }
+  .p2 { left: 390px; top: 0; z-index: 2; width: 300px; }
+  .p3 { right: 70px; top: 50px; transform: rotate(4deg); }
+  .code {
+    position: absolute; bottom: 120px; inset-inline: 110px; z-index: 3; direction: ltr; text-align: left;
+    background: #0d0d2b; border-radius: 22px; padding: 26px 32px 28px;
+    box-shadow: 0 24px 50px -18px rgba(0,0,0,.7), 0 0 0 1.5px rgba(255,255,255,.1);
+    font: 500 25px/1.6 'DejaVu Sans Mono', ui-monospace, monospace; color: #e8e8ff;
+  }
+  .code .bar { display: flex; gap: 8px; margin-bottom: 14px; }
+  .code .bar i { width: 12px; height: 12px; border-radius: 50%; background: #34345c; }
+  .code .bar i:first-child { background: var(--saffron); }
+  .k { color: #9d9dff; } .s { color: #ffd59a; } .c { color: #7d7da8; } .f { color: #8fe0d0; }
+  footer { position: absolute; bottom: 44px; inset-inline: 72px; display: flex; justify-content: space-between; align-items: center;
+    font: 500 26px/1 Tajawal, sans-serif; color: #c9c9f4; }
+  footer .open { display: flex; gap: 10px; align-items: center; }
+  footer .open span { width: 10px; height: 10px; border-radius: 50%; background: var(--saffron); }
+  footer .site { direction: ltr; font-weight: 700; color: #fff; }
+</style>
+</head>
+<body>
+  <svg class="stars" width="1080" height="1350" aria-hidden="true">
+    <defs>
+      <pattern id="st" width="72" height="72" patternUnits="userSpaceOnUse">
+        <path d="M36 22 L40 32 L50 36 L40 40 L36 50 L32 40 L22 36 L32 32 Z M36 26 L46 26 L46 46 L26 46 L26 26 Z" fill="none" stroke="#fff" stroke-width="1.2"/>
+      </pattern>
+    </defs>
+    <rect width="1080" height="1350" fill="url(#st)"/>
+  </svg>
+
+  <header>
+    <div class="brand"><span class="pkg">raselna_chat</span><span class="dot"></span><span class="fl">Flutter</span></div>
+    <p class="tag">شات عربي جاهز لتطبيقك مع <b>بوت الشركة</b>.<br>طلبات، حجوزات، دعم… بتلات أسطر كود.</p>
+  </header>
+
+  <div class="phones">
+    <div class="phone p1"><img src="../screenshots/menu.png" alt=""></div>
+    <div class="phone p2"><img src="../screenshots/slots.png" alt=""></div>
+    <div class="phone p3"><img src="../screenshots/dark.png" alt=""></div>
+  </div>
+
+  <div class="code">
+    <div class="bar"><i></i><i></i><i></i></div>
+<span class="c">// pubspec.yaml: raselna_chat: ^0.1.0</span><br>
+<span class="k">await</span> RaselnaChat.<span class="f">init</span>(accessKey: <span class="s">'rpk_live_…'</span>);<br>
+RaselnaChat.<span class="f">open</span>(context);
+  </div>
+
+  <footer>
+    <div class="open"><span></span>مفتوح المصدر · عربي أولاً · <bdi dir="ltr">MIT</bdi></div>
+    <div class="site">raselna.com</div>
+  </footer>
+</body>
+</html>

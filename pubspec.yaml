@@ -1,0 +1,46 @@
+name: raselna_chat
+description: >-
+  Drop-in, Arabic-first chat UI for Raselna business bots. Add your
+  publishable key and your app talks to the business's chat flow.
+version: 0.1.0
+homepage: https://raselna.com
+repository: https://github.com/MahmoudSlameh/raselna_chat
+issue_tracker: https://github.com/MahmoudSlameh/raselna_chat/issues
+topics:
+  - chat
+  - chatbot
+  - arabic
+  - rtl
+  - customer-support
+
+environment:
+  sdk: ^3.7.0
+  flutter: ">=3.29.0"
+
+# Every dependency is a version-conflict risk for the app that adds us, so
+# the list is short on purpose (see README, "Dependencies").
+dependencies:
+  flutter:
+    sdk: flutter
+  # HTTPS calls to the Raselna chat API. Injectable client = testable.
+  http: ^1.2.0
+  # Opens the one-time "continue in browser" link (Custom Tabs / Safari VC).
+  url_launcher: ^6.3.0
+  # Keeps the device credential (a secret, per the API contract) and the
+  # offline queue in Keychain / Keystore.
+  flutter_secure_storage: ">=9.2.0 <11.0.0"
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  fonts:
+    - family: Tajawal
+      fonts:
+        - asset: fonts/Tajawal-Regular.ttf
+        - asset: fonts/Tajawal-Medium.ttf
+          weight: 500
+        - asset: fonts/Tajawal-Bold.ttf
+          weight: 700

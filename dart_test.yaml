@@ -1,0 +1,3 @@
+tags:
+  golden:
+    # Rendered on Linux; skip elsewhere with: flutter test -x golden

@@ -1,0 +1,12 @@
+{
+  "name": "raselna_chat example",
+  "short_name": "raselna_chat",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F2F3F8",
+  "theme_color": "#202060",
+  "description": "Demo of the raselna_chat Flutter package.",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "icons": []
+}
