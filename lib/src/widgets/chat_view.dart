@@ -64,8 +64,9 @@ class _RaselnaChatViewState extends State<RaselnaChatView>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (MediaQuery.disableAnimationsOf(context))
+    if (MediaQuery.disableAnimationsOf(context)) {
       _controller.animateTyping = false;
+    }
   }
 
   @override

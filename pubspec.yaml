@@ -1,8 +1,8 @@
 name: raselna_chat
 description: >-
-  Drop-in, Arabic-first chat UI for Raselna business bots. Add your
-  publishable key and your app talks to the business's chat flow.
-version: 0.1.0
+  Arabic-first, right-to-left chat UI for Flutter apps. Add a publishable
+  key and your app talks to a business's Raselna bot: orders, bookings, support.
+version: 0.1.1
 homepage: https://raselna.com
 repository: https://github.com/MahmoudSlameh/raselna_chat
 issue_tracker: https://github.com/MahmoudSlameh/raselna_chat/issues
@@ -12,6 +12,17 @@ topics:
   - arabic
   - rtl
   - customer-support
+
+platforms:
+  android:
+  ios:
+  web:
+
+screenshots:
+  - description: Booking time slots in Arabic (right to left)
+    path: doc/slots.png
+  - description: Order confirmation in dark mode
+    path: doc/dark.png
 
 environment:
   sdk: ^3.7.0
@@ -28,7 +39,7 @@ dependencies:
   url_launcher: ^6.3.0
   # Keeps the device credential (a secret, per the API contract) and the
   # offline queue in Keychain / Keystore.
-  flutter_secure_storage: ">=9.2.0 <11.0.0"
+  flutter_secure_storage: ">=9.2.0 <12.0.0"
 
 dev_dependencies:
   flutter_test:

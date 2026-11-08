@@ -2,11 +2,11 @@
 
 An Arabic-first chat for Flutter apps. You add your publishable key, and your app talks to the business's bot on [Raselna](https://raselna.com): orders, bookings, order tracking and support, in a chat your customers already know how to use.
 
-> **Status: MVP (0.1.0).** Built against the Raselna chat API v1 contract (`https://api.raselna.com/v1`). The API is new, so details may still change before 1.0. You need a Raselna account for the server side: the business designs its bot in the Raselna dashboard, and this package only displays it. The public app API is rolling out now; until your business has an access key, run the example with its built-in mock (no network needed).
+> **Status: MVP (0.1.x).** Built against the Raselna chat API v1 contract (`https://api.raselna.com/v1`). The API is new, so details may still change before 1.0. You need a Raselna account for the server side: the business designs its bot in the Raselna dashboard, and this package only displays it. The public app API is rolling out now; until your business has an access key, run the example with its built-in mock (no network needed).
 
 | Welcome | Quick replies | Continue in browser | Time slots | Booked | Dark |
 | --- | --- | --- | --- | --- | --- |
-| ![](screenshots/welcome.png) | ![](screenshots/menu.png) | ![](screenshots/catalog.png) | ![](screenshots/slots.png) | ![](screenshots/confirm.png) | ![](screenshots/dark.png) |
+| ![Screenshot](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/welcome.png) | ![Screenshot](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/menu.png) | ![Screenshot](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/catalog.png) | ![Screenshot](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/slots.png) | ![Screenshot](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/confirm.png) | ![Screenshot](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/dark.png) |
 
 ## Setup in three lines
 
@@ -16,7 +16,17 @@ dependencies:
   raselna_chat: ^0.1.0
 ```
 
-Or run `flutter pub add raselna_chat`. [![pub package](https://img.shields.io/pub/v/raselna_chat.svg)](https://pub.dev/packages/raselna_chat)
+Or straight from GitHub (before a release reaches pub.dev, or to try `main`):
+
+```yaml
+dependencies:
+  raselna_chat:
+    git:
+      url: https://github.com/MahmoudSlameh/raselna_chat
+      ref: main
+```
+
+Platforms: Android, iOS and web.
 
 ```dart
 import 'package:raselna_chat/raselna_chat.dart';
@@ -158,6 +168,14 @@ flutter test                     # unit, widget and transport tests
 flutter test --update-goldens test/golden_test.dart   # regenerate the RTL goldens (Linux)
 cd example && flutter build web && cd .. && node tool/capture.cjs   # screenshots + promo
 ```
+
+## Releasing (maintainers)
+
+Releases go to pub.dev from GitHub Actions (`.github/workflows/publish.yml`), with pub.dev's OIDC login, so no token is stored anywhere.
+
+1. One time, on pub.dev: *raselna_chat › Admin › Automated publishing*: enable GitHub Actions, repository `MahmoudSlameh/raselna_chat`, tag pattern `v{{version}}` (and optionally require the `pub.dev` environment). The very first version must be published by hand (`flutter pub publish`) to create the package.
+2. Bump `version` in `pubspec.yaml` and `raselnaSdkVersion` in `lib/src/version.dart`, add a `CHANGELOG.md` entry, and commit.
+3. `git tag v0.1.1 && git push origin v0.1.1`. The workflow checks that the tag matches the pubspec version, runs analyze, format and tests, then publishes.
 
 ## License
 

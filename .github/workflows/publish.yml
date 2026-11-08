@@ -1,0 +1,43 @@
+# Publishes raselna_chat to pub.dev when a tag like v0.1.0 is pushed.
+#
+# Authentication is pub.dev's GitHub OIDC (no secret stored here). One-time
+# setup on pub.dev > raselna_chat > Admin > Automated publishing:
+#   - Enable publishing from GitHub Actions
+#   - Repository: MahmoudSlameh/raselna_chat
+#   - Tag pattern: v{{version}}
+#   - (optional) Require GitHub Actions environment: pub.dev
+#
+# A Flutter package needs the Flutter SDK, so this follows pub.dev's guide
+# for Flutter: dart-lang/setup-dart provides the OIDC token, flutter-action
+# provides Flutter. (The reusable dart-lang/setup-dart/.github/workflows/
+# publish.yml installs Dart only, which cannot resolve `sdk: flutter`.)
+name: Publish to pub.dev
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pub.dev
+    permissions:
+      id-token: write # pub.dev OIDC
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Tag matches pubspec version
+        run: |
+          version=$(grep -E '^version:' pubspec.yaml | awk '{print $2}')
+          test "v$version" = "${GITHUB_REF_NAME}" || { echo "Tag ${GITHUB_REF_NAME} != v$version"; exit 1; }
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: dart format --output=none --set-exit-if-changed .
+      - run: flutter test -x golden
+      - run: flutter pub publish --dry-run
+      - run: flutter pub publish --force

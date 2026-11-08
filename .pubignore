@@ -1,0 +1,17 @@
+# .pubignore replaces .gitignore for publishing, so repeat those rules.
+.dart_tool/
+build/
+pubspec.lock
+.flutter-plugins
+.flutter-plugins-dependencies
+example/.dart_tool/
+example/build/
+example/.flutter-plugins-dependencies
+test/failures/
+
+# Not needed by package users (and they bloat the archive). The README
+# links the screenshots with absolute raw.githubusercontent.com URLs.
+screenshots/
+test/goldens/
+tool/
+.github/

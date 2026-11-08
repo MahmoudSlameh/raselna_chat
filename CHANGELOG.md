@@ -1,4 +1,13 @@
-## 0.1.0 (MVP, unreleased)
+## 0.1.1
+
+- Smaller package: screenshots, goldens and tooling are no longer shipped (archive 1 MB → 460 KB); README images load from GitHub.
+- pub.dev metadata: description, platforms (Android, iOS, Web), screenshots, repository and issue tracker.
+- `flutter_secure_storage` allows `>=9.2.0 <12.0.0`.
+- Automated publishing from GitHub Actions on `v*` tags.
+
+## 0.1.0
+
+First public release (MVP), built on the Raselna chat API v1.
 
 - `RaselnaChat.init(accessKey: …)`, `RaselnaChat.open(context)`, `RaselnaChatView()`, `RaselnaChat.setUser()` (stub: not in API v1 yet).
 - Native bubbles, quick replies, option sheet, text/number/phone/email/date input with validation, slot picker, status/end/paused cards, typing indicator, step progress.

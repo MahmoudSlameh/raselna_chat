@@ -26,8 +26,9 @@ class ChatBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = RaselnaChatColors.of(context);
-    if (entry.side == ChatSide.system)
+    if (entry.side == ChatSide.system) {
       return SystemLine(text: entry.text ?? '');
+    }
 
     final mine = entry.side == ChatSide.customer;
     final r = Radius.circular(c.radius);
