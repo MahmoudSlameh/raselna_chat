@@ -14,7 +14,38 @@ const path = require('path');
 const root = path.resolve(__dirname, '..');
 const web = path.join(root, 'example', 'build', 'web');
 const out = path.join(root, 'screenshots');
-const shots = ['welcome', 'menu', 'catalog', 'slots', 'confirm', 'dark'];
+// Each shot is a `?shot=` state, plus taps (by accessible label) that open
+// a sheet on top of it.
+const shots = [
+  ['welcome'],
+  ['menu'],
+  ['catalog'],
+  ['sheet', ['تصفّح القائمة']],
+  ['product', ['تصفّح القائمة', 'كرواسون زعتر']],
+  ['cart'],
+  ['checkout'],
+  ['finder'],
+  ['slots'],
+  ['confirm'],
+  ['dark'],
+];
+
+async function tap(page, label) {
+  const tries = [
+    () => page.getByRole('button', { name: label }).first(),
+    () => page.getByLabel(label).first(),
+    () => page.getByText(label, { exact: false }).first(),
+  ];
+  for (const t of tries) {
+    const el = t();
+    if (await el.count()) {
+      await el.click({ timeout: 5000 });
+      await page.waitForTimeout(900);
+      return;
+    }
+  }
+  throw new Error('No element labelled ' + label);
+}
 
 const types = {
   '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript',
@@ -54,16 +85,27 @@ function serve(dir) {
     hasTouch: true,
     locale: 'ar',
   });
-  for (const shot of shots) {
+  const only = process.argv.slice(2);
+  for (const [shot, taps = []] of shots) {
+    if (only.length && !only.includes(shot)) continue;
     const page = await context.newPage();
     await page.goto(`${base}?shot=${shot}`, { waitUntil: 'networkidle' });
     await page.waitForSelector('flutter-view, flt-glass-pane', { timeout: 30000 });
     await page.waitForTimeout(2500);
+    for (const label of taps) await tap(page, label);
+    await page.mouse.move(1, 1);
+    await page.waitForTimeout(300);
     await page.screenshot({ path: path.join(out, `${shot}.png`) });
     console.log('wrote', `${shot}.png`);
     await page.close();
   }
   await context.close();
+
+  if (only.length) {
+    await browser.close();
+    server.close();
+    return;
+  }
 
   // The 1080x1350 promo (feed portrait), from the phone shots above.
   const promo = await browser.newPage({ viewport: { width: 1080, height: 1350 }, deviceScaleFactor: 1 });
@@ -71,6 +113,10 @@ function serve(dir) {
   await promo.waitForTimeout(800);
   await promo.screenshot({ path: path.join(out, 'promo-1080x1350.png') });
   console.log('wrote promo-1080x1350.png');
+  await promo.goto('file://' + path.join(__dirname, 'promo-native.html'));
+  await promo.waitForTimeout(800);
+  await promo.screenshot({ path: path.join(out, 'promo-native-1080x1350.png') });
+  console.log('wrote promo-native-1080x1350.png');
 
   await browser.close();
   server.close();

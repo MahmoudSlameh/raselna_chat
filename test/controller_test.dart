@@ -128,7 +128,7 @@ void main() {
   });
 
   test(
-    'the simulated handoff completes the catalog step and continues',
+    'rich steps stay on screen, disabled, while an action is on its way',
     () async {
       final ctl = controllerFor(
         MockTransport(latency: Duration.zero, typing: false),
@@ -136,17 +136,46 @@ void main() {
       addTearDown(ctl.dispose);
       await ctl.load();
       await ctl.choose((ctl.prompt as MenuPrompt).options.first);
-      expect(ctl.prompt, isA<HandoffPrompt>());
-      await ctl.openHandoff();
-      expect(ctl.prompt, isA<InputPrompt>());
-      expect((ctl.prompt as InputPrompt).inputKind, InputKind.phone);
-      expect(ctl.entries.any((e) => e.card?.status == '45,000 ل.س'), isTrue);
+      final catalog = ctl.prompt as ProductListPrompt;
+      expect(ctl.richPrompt, same(catalog));
+      final shown = <bool>[];
+      ctl.addListener(
+        () => shown.add(ctl.isBusy && ctl.richPrompt is ProductListPrompt),
+      );
+      await ctl.act(
+        const ActionReply('add', product: 'p.kaak', qty: 2),
+        echo: '➕ 2 × كعك',
+      );
+      expect(shown, contains(true), reason: 'the catalogue stays while busy');
+      expect((ctl.prompt as ProductListPrompt).cartCount, 1);
     },
   );
 
+  test('an offline action is queued and replayed with the same key', () async {
+    final store = MemoryStore();
+    final t = FakeTransport(
+      onStart: () => turn(const CartPrompt(canCheckout: true)),
+    );
+    final ctl = controllerFor(t, store: store);
+    addTearDown(ctl.dispose);
+    await ctl.load();
+    t.offline = true;
+    await ctl.act(
+      const ActionReply('set_qty', line: 'l1', qty: 3),
+      echo: '✏️ كعك × 3',
+    );
+    expect(await store.read('queue'), contains('set_qty'));
+    t.offline = false;
+    await ctl.flushQueue();
+    expect(t.idempotencyKeys.toSet(), hasLength(1));
+    final sent = t.replies.single as ActionReply;
+    expect(sent.type, 'set_qty');
+    expect(sent.qty, 3);
+  });
+
   group('MockTransport plays a whole conversation', () {
     test(
-      'bakery: order, phone (with a wrong try), delivery, confirmation',
+      'bakery: catalogue (options, quarter kilos), cart, checkout with errors, confirmation',
       () async {
         final ctl = controllerFor(
           MockTransport(latency: Duration.zero, typing: false),
@@ -154,15 +183,120 @@ void main() {
         addTearDown(ctl.dispose);
         await ctl.load();
         await ctl.sendText('1'); // typing the option number works too
-        await ctl.openHandoff();
-        await ctl.sendText('123');
-        expect(ctl.entries.last.text, contains('الرقم مو صحيح'));
-        await ctl.sendText('٠٩٩١٢٣٤٥٦٧');
-        await ctl.choose((ctl.prompt as MenuPrompt).options.first);
+        final catalog = ctl.prompt as ProductListPrompt;
+        expect(catalog.products.any((p) => !p.available), isTrue);
+
+        // A required option missing: the server says so, nothing is added.
+        await ctl.act(
+          const ActionReply('add', product: 'p.croissant', qty: 2),
+          echo: 'x',
+        );
+        expect((ctl.prompt as ProductListPrompt).cartCount, 0);
+        expect(ctl.entries.last.text, contains('الحشوة'));
+
+        await ctl.act(
+          const ActionReply(
+            'add',
+            product: 'p.croissant',
+            qty: 2,
+            options: ['o.cheese'],
+          ),
+          echo: 'x',
+        );
+        await ctl.act(
+          const ActionReply('add', product: 'p.maamoul', qty: 0.75),
+          echo: 'x',
+        );
+        final after = ctl.prompt as ProductListPrompt;
+        expect(after.cartCount, 2);
+        expect(after.cartTotal, '104,000 ل.س');
+
+        await ctl.act(const ActionReply('done'), echo: 'x');
+        final cart = ctl.prompt as CartPrompt;
+        expect(cart.lines.first.options, 'زعتر وجبنة');
+        expect(cart.lines.last.qty, 0.75);
+        await ctl.act(
+          ActionReply('remove', line: cart.lines.last.id),
+          echo: 'x',
+        );
+        expect((ctl.prompt as CartPrompt).subtotal, '14,000 ل.س');
+
+        await ctl.act(const ActionReply('confirm'), echo: 'x');
+        final form = ctl.prompt as FormPrompt;
+        expect(
+          form.fields.map((f) => f.name),
+          containsAll(['fulfillment', 'zone', 'address', 'name', 'phone']),
+        );
+
+        await ctl.act(
+          const ActionReply(
+            'submit',
+            values: {'fulfillment': 'delivery', 'name': 'س', 'phone': '12'},
+          ),
+          echo: 'x',
+        );
+        final again = ctl.prompt as FormPrompt;
+        expect(again.hasErrors, isTrue);
+        expect(
+          again.fields.firstWhere((f) => f.name == 'phone').error,
+          isNotNull,
+        );
+        expect(
+          again.fields.firstWhere((f) => f.name == 'zone').error,
+          isNotNull,
+        );
+
+        await ctl.act(
+          const ActionReply(
+            'submit',
+            values: {
+              'fulfillment': 'delivery',
+              'zone': 'z.mazzeh',
+              'address': 'المزة، شارع الجلاء، بناية 4',
+              'time': 'asap',
+              'name': 'سلمى',
+              'phone': '0991234567',
+            },
+          ),
+          echo: 'x',
+        );
         expect(ctl.prompt, isA<EndPrompt>());
-        expect(ctl.entries.last.card!.title, 'طلب رقم 1042');
+        expect(ctl.entries.last.card!.title, 'طلب رقم 1042 · 19,000 ل.س');
       },
     );
+
+    test('store: range, pick results, more, select', () async {
+      final ctl = controllerFor(
+        MockTransport(
+          scenario: MockScenario.store,
+          latency: Duration.zero,
+          typing: false,
+        ),
+      );
+      addTearDown(ctl.dispose);
+      await ctl.load();
+      await ctl.choose((ctl.prompt as MenuPrompt).options.first);
+      expect((ctl.prompt as FormPrompt).isRange, isTrue);
+      await ctl.act(
+        const ActionReply('submit', values: {'min': '100', 'max': '400'}),
+        echo: 'x',
+      );
+      final first = ctl.prompt as ProductListPrompt;
+      expect(first.isPick, isTrue);
+      expect(first.hasMore, isTrue);
+      await ctl.act(const ActionReply('more'), echo: 'x');
+      final second = ctl.prompt as ProductListPrompt;
+      expect(second.hasMore, isFalse);
+      await ctl.act(
+        ActionReply('select', product: second.products.first.id),
+        echo: 'x',
+      );
+      expect(ctl.prompt, isA<EndPrompt>());
+      expect(
+        ctl.entries.any((e) => e.card?.status == 'محجوز إلك 24 ساعة'),
+        isTrue,
+      );
+    });
 
     test('bakery: tracking an order', () async {
       final ctl = controllerFor(

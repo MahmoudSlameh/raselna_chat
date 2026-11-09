@@ -48,6 +48,7 @@ class RaselnaStrings {
     required this.poweredBy,
     required this.raselna,
     required this.botSaid,
+    this.shop = RaselnaShopStrings.ar,
   });
 
   /// Arabic (the default).
@@ -148,6 +149,7 @@ class RaselnaStrings {
     poweredBy: 'Powered by',
     raselna: 'Raselna',
     botSaid: '{bot} said',
+    shop: RaselnaShopStrings.en,
   );
 
   /// The built-in strings for a language code; Arabic for anything else.
@@ -205,4 +207,198 @@ class RaselnaStrings {
 
   /// Screen-reader prefix of a bot bubble; `{bot}` is replaced.
   final String botSaid;
+
+  /// Catalogue, cart, form and finder texts.
+  final RaselnaShopStrings shop;
+}
+
+/// Fixed texts of the native catalogue, cart, forms and finder results.
+/// The tenant's own button labels from the server win where sent.
+class RaselnaShopStrings {
+  const RaselnaShopStrings({
+    required this.menu,
+    required this.browse,
+    required this.all,
+    required this.search,
+    required this.noMatch,
+    required this.noProducts,
+    required this.add,
+    required this.addToCart,
+    required this.soldOut,
+    required this.required,
+    required this.optional,
+    required this.quantity,
+    required this.decrease,
+    required this.increase,
+    required this.remove,
+    required this.cart,
+    required this.cartEmpty,
+    required this.oneItem,
+    required this.items,
+    required this.subtotal,
+    required this.form,
+    required this.fillForm,
+    required this.sendOrder,
+    required this.sent,
+    required this.added,
+    required this.changed,
+    required this.removed,
+    required this.fieldRequired,
+    required this.details,
+    required this.choose,
+    required this.chose,
+    required this.more,
+    required this.startOver,
+    required this.code,
+    required this.from,
+    required this.to,
+    required this.ok,
+    required this.anyRange,
+    required this.numbersOnly,
+    required this.close,
+    required this.picture,
+  });
+
+  static const ar = RaselnaShopStrings(
+    menu: 'القائمة',
+    browse: 'تصفّح القائمة',
+    all: 'الكل',
+    search: 'دوّر على منتج',
+    noMatch: 'ما لقينا منتج بهالاسم.',
+    noProducts: 'ما في منتجات هلأ.',
+    add: 'أضف',
+    addToCart: 'أضف للسلة',
+    soldOut: 'نفد',
+    required: 'مطلوب',
+    optional: 'اختياري',
+    quantity: 'الكمية',
+    decrease: 'إنقاص',
+    increase: 'زيادة',
+    remove: 'حذف',
+    cart: 'السلة',
+    cartEmpty: 'السلة فاضية',
+    oneItem: 'منتج واحد',
+    items: '{n} منتجات',
+    subtotal: 'المجموع',
+    form: 'بيانات الطلب',
+    fillForm: 'عبّي بيانات الطلب',
+    sendOrder: 'إرسال الطلب',
+    sent: '📝 أرسلت بيانات الطلب',
+    added: '➕ {qty} × {name}',
+    changed: '✏️ {name} × {qty}',
+    removed: '🗑️ {name}',
+    fieldRequired: 'هالحقل مطلوب.',
+    details: 'التفاصيل',
+    choose: 'بدي هاد',
+    chose: '✅ {name}',
+    more: 'عرض المزيد',
+    startOver: 'ابدأ من جديد',
+    code: 'رقم المنتج',
+    from: 'من',
+    to: 'لحد',
+    ok: 'تمام',
+    anyRange: 'ما بتفرق',
+    numbersOnly: 'اكتب أرقام بس.',
+    close: 'إغلاق',
+    picture: 'صورة {i} من {n}',
+  );
+
+  static const en = RaselnaShopStrings(
+    menu: 'Menu',
+    browse: 'Browse the menu',
+    all: 'All',
+    search: 'Search products',
+    noMatch: 'No product by that name.',
+    noProducts: 'No products right now.',
+    add: 'Add',
+    addToCart: 'Add to cart',
+    soldOut: 'Sold out',
+    required: 'Required',
+    optional: 'Optional',
+    quantity: 'Quantity',
+    decrease: 'Decrease',
+    increase: 'Increase',
+    remove: 'Remove',
+    cart: 'Cart',
+    cartEmpty: 'Your cart is empty',
+    oneItem: '1 item',
+    items: '{n} items',
+    subtotal: 'Subtotal',
+    form: 'Order details',
+    fillForm: 'Fill in the order details',
+    sendOrder: 'Place order',
+    sent: '📝 Sent my order details',
+    added: '➕ {qty} × {name}',
+    changed: '✏️ {name} × {qty}',
+    removed: '🗑️ {name}',
+    fieldRequired: 'This field is required.',
+    details: 'Details',
+    choose: 'I want this',
+    chose: '✅ {name}',
+    more: 'Show more',
+    startOver: 'Start over',
+    code: 'Product code',
+    from: 'From',
+    to: 'To',
+    ok: 'OK',
+    anyRange: 'Any',
+    numbersOnly: 'Numbers only.',
+    close: 'Close',
+    picture: 'Picture {i} of {n}',
+  );
+
+  final String menu;
+  final String browse;
+  final String all;
+  final String search;
+  final String noMatch;
+  final String noProducts;
+  final String add;
+  final String addToCart;
+  final String soldOut;
+  final String required;
+  final String optional;
+  final String quantity;
+  final String decrease;
+  final String increase;
+  final String remove;
+  final String cart;
+  final String cartEmpty;
+  final String oneItem;
+
+  /// `{n}` is replaced.
+  final String items;
+  final String subtotal;
+  final String form;
+  final String fillForm;
+  final String sendOrder;
+  final String sent;
+
+  /// `{qty}` and `{name}` are replaced.
+  final String added;
+  final String changed;
+  final String removed;
+  final String fieldRequired;
+  final String details;
+  final String choose;
+  final String chose;
+  final String more;
+  final String startOver;
+  final String code;
+  final String from;
+  final String to;
+  final String ok;
+  final String anyRange;
+  final String numbersOnly;
+  final String close;
+
+  /// `{i}` and `{n}` are replaced.
+  final String picture;
+
+  String count(int n) =>
+      n == 0
+          ? cartEmpty
+          : n == 1
+          ? oneItem
+          : items.replaceAll('{n}', '$n');
 }

@@ -196,17 +196,56 @@ void main() {
   });
 
   test(
-    'handoff.required turns any prompt into a browser step, secret included',
+    'rich steps stay native even when flagged rich_step; secret goes to the browser',
     () async {
       await store.write('device', _device);
       final catalog =
           await transport((r) async => ok('turn_catalog')).current();
-      final c = catalog!.prompt as HandoffPrompt;
-      expect(c.reason, HandoffReason.catalog);
-      expect(c.count, 2);
+      final c = catalog!.prompt as ProductListPrompt;
+      expect(c.products, hasLength(2));
+      expect(c.products.first.name, 'كرواسون زعتر');
+      expect(c.categories.single.name, 'معجنات');
+      expect(
+        requests.last.headers['X-Raselna-Capabilities'],
+        'product_list,product_list.pick,cart,form,form.range,slots',
+      );
 
       final secret = await transport((r) async => ok('turn_secret')).current();
       expect((secret!.prompt as HandoffPrompt).reason, HandoffReason.secret);
+    },
+  );
+
+  test(
+    'a rich-step action is sent as {action} with the idempotency key',
+    () async {
+      await store.write('device', _device);
+      final t = transport((r) async => ok('turn_catalog'));
+      await t.reply(
+        const ActionReply('add', product: 'p1', qty: 0.25, options: ['o1']),
+        idempotencyKey: 'idem-add',
+      );
+      expect(requests.last.headers['Idempotency-Key'], 'idem-add');
+      expect(jsonDecode(requests.last.body), {
+        'action': {
+          'type': 'add',
+          'product': 'p1',
+          'qty': 0.25,
+          'options': ['o1'],
+        },
+      });
+      await t.reply(
+        const ActionReply(
+          'submit',
+          values: {'name': 'سلمى', 'phone': '0991234567'},
+        ),
+        idempotencyKey: 'idem-submit',
+      );
+      expect(jsonDecode(requests.last.body), {
+        'action': {
+          'type': 'submit',
+          'values': {'name': 'سلمى', 'phone': '0991234567'},
+        },
+      });
     },
   );
 

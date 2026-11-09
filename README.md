@@ -2,18 +2,22 @@
 
 An Arabic-first chat for Flutter apps. You add your publishable key, and your app talks to the business's bot on [Raselna](https://raselna.com): orders, bookings, order tracking and support, in a chat your customers already know how to use.
 
-> **Status: MVP (0.1.x).** Built against the Raselna chat API v1 contract (`https://api.raselna.com/v1`). The API is new, so details may still change before 1.0. You need a Raselna account for the server side: the business designs its bot in the Raselna dashboard, and this package only displays it. The public app API is rolling out now; until your business has an access key, run the example with its built-in mock (no network needed).
+> **Status: beta (0.2.x).** Built against the Raselna chat API v1 contract (`https://api.raselna.com/v1`). The API is new, so details may still change before 1.0. You need a Raselna account for the server side: the business designs its bot in the Raselna dashboard, and this package only displays it. The public app API is rolling out now; until your business has an access key, run the example with its built-in mock (no network needed).
 
-| Welcome | Quick replies | Continue in browser | Time slots | Booked | Dark |
+| Catalogue | Product | Cart | Checkout | Finder | Dark |
 | --- | --- | --- | --- | --- | --- |
-| ![Screenshot](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/welcome.png) | ![Screenshot](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/menu.png) | ![Screenshot](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/catalog.png) | ![Screenshot](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/slots.png) | ![Screenshot](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/confirm.png) | ![Screenshot](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/dark.png) |
+| ![sheet](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/sheet.png) | ![product](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/product.png) | ![cart](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/cart.png) | ![checkout](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/checkout.png) | ![finder](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/finder.png) | ![dark](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/dark.png) |
+
+| Welcome | Quick replies | Time slots | Booked |
+| --- | --- | --- | --- |
+| ![welcome](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/welcome.png) | ![menu](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/menu.png) | ![slots](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/slots.png) | ![confirm](https://raw.githubusercontent.com/MahmoudSlameh/raselna_chat/main/screenshots/confirm.png) |
 
 ## Setup in three lines
 
 ```yaml
 # pubspec.yaml
 dependencies:
-  raselna_chat: ^0.1.1
+  raselna_chat: ^0.2.0
 ```
 
 Or run `flutter pub add raselna_chat`. [![pub package](https://img.shields.io/pub/v/raselna_chat.svg)](https://pub.dev/packages/raselna_chat)
@@ -82,11 +86,23 @@ Everything the bot says and asks comes from the server; the SDK only renders it.
 | Step n of m | A progress line over the input |
 | End / paused | Start-over button / conversation number with copy and "continue" |
 | Bot "typing" | Three-dot bubble and "typing…" in the header |
-| Catalog, cart, multi-field form, secret input, any step this version doesn't know | A **"continue in browser"** card (below) |
+| Catalogue (`product_list`) | A card in the chat and a sheet: search, category tabs, product rows with picture, price and unit, sold-out state; a product sheet with option groups (required / optional) and a quantity stepper that follows the product's step (e.g. ¼ kg) |
+| Cart (`cart`) | Lines with options, unit price and the server's line totals, a −/+ stepper (the minus becomes a bin at the minimum), subtotal, "add more" and "confirm" |
+| Checkout form (`form`) | A sheet that opens by itself: choice fields with hints (delivery zone fees), text, multi-line and phone fields, `show_if` (address only for delivery), required and phone checks on the device, the server's messages per field after a refused submit |
+| Product finder results (`product_list`, mode `pick`) | Swipeable result cards with picture, price, hint and attributes; a details sheet with a picture gallery, code and specs; "I want this", "show more", "start over", "talk to us" |
+| Price range (`form`, mode `range`) | From / to number fields (Arabic digits accepted), "OK" and "any" |
+| A secret question, or a step this version doesn't know | A **"continue in browser"** card (below) |
 
-### Continue in browser
+Rich steps answer with `{"action": …}` replies (`add`, `set_qty`, `remove`, `done`, `more`, `confirm`, `submit`, `select`, `restart`, `contact`) carrying only the server's opaque ids, a quantity or typed values: never a price. While an answer is on its way the card stays visible but disabled, so the catalogue sheet stays open between two adds. The SDK tells the server what it can draw with `X-Raselna-Capabilities: product_list,product_list.pick,cart,form,form.range,slots` (chat API 1.1). A mode this version does not know (say a future `product_list` mode) opens in the browser, like an unknown kind.
 
-Rich steps run on the business's own secure web chat for now. The card asks the API for a short-lived, single-use link, opens it in Custom Tabs / SFSafariViewController (never a WebView), and when the app comes back to the foreground the chat asks for the current question again and carries on natively. The device stays bound to the conversation the whole time, so nothing is lost. A step type added on the server after you shipped your app also lands here, so old app versions never break.
+### What still opens the browser, and why
+
+Only two things:
+
+1. **Secret questions** (`handoff.reason = secret`: a password, a PIN, any value the business marked secret). The answer must never pass through your app's process, keyboard history or crash logs, so the step opens on the business's own secure web chat in the **system browser** (Custom Tabs / SFSafariViewController through `url_launcher`). Never in a WebView (the app could read it) and never natively.
+2. **A step kind this SDK version doesn't know yet** (added on the server after you shipped). It runs on the web chat, so an old app version never breaks.
+
+The card asks the API for a short-lived, single-use link; when the app comes back to the foreground the chat asks for the current question again and carries on natively. The device stays bound to the conversation the whole time, so nothing is lost.
 
 ### Offline
 
@@ -119,11 +135,12 @@ Tajawal (SIL Open Font License 1.1) is bundled; see `fonts/OFL.txt`.
 ```dart
 await RaselnaChat.init(
   accessKey: 'rpk_test_demo',
-  transport: MockTransport(scenario: MockScenario.bakery),  // or MockScenario.clinic
+  transport: MockTransport(scenario: MockScenario.bakery),  // .clinic or .store
 );
 ```
 
-- **Bakery**: menu → catalog (continue in browser) → phone (with validation) → delivery or pickup → order confirmation; or track an order by number.
+- **Bakery**: menu → native catalogue (options, quarter kilos, a sold-out item) → cart → checkout form (delivery zone, address, time, name, phone; wrong values come back with field errors) → order confirmation; or track an order by number.
+- **Store**: product finder → price range → swipeable results with details → "I want this" → reserved.
 - **Clinic**: long menu (sheet) → service → day → time → name → phone → booking confirmation; or "talk to the receptionist", which pauses with a conversation number.
 
 The `example/` app runs the mock by default and has a switch to use a real key. If the platform folders are missing, generate them once with `flutter create --platforms=android,ios,web .` inside `example/`.
@@ -157,7 +174,8 @@ No state-management package, no Firebase, no WebView.
 
 | raselna_chat | Raselna chat API |
 | --- | --- |
-| 0.x (beta) | v1 |
+| 0.1.x | v1 (1.0) |
+| 0.2.x | v1 (1.1: native rich steps) |
 
 Within v1 the server only adds. The SDK ignores unknown fields, skips unknown message types, opens unknown step kinds in the browser, treats unknown input types as text, and acts on unknown error codes by their HTTP status.
 
@@ -200,14 +218,15 @@ RaselnaChat.open(context);
 
 <div dir="rtl">
 
-- **نسخة أولى (MVP):** الواجهة والمحادثات الوهمية شغّالة، والـAPI العام (v1) عم يتثبّت، فممكن يتغيّر شي قبل 1.0.
+- **نسخة تجريبية (0.2):** مبنية على الـAPI العام v1، فممكن تتغيّر تفاصيل قبل 1.0.
 - **بدك حساب براسلنا:** الشركة بتصمم البوت من لوحة راسلنا، والباكج بتعرضه بس.
 - **المفتاح عام، مو سر:** `rpk_live_…` بينقرا من أي APK، وهاد طبيعي. **لا تحط أي سر بالتطبيق** (توكنات، سر الهوية…). بيانات الجهاز (device credential) بتنحفظ بـKeychain/Keystore. الإجابات السرية (كلمة سر، PIN) ما بتنكتب بالتطبيق أبداً، بتنفتح بصفحة آمنة.
 - **عربي أولاً:** من اليمين لليسار، خط Tajawal مضمّن، ونصوص إنكليزية كمان.
 - **أصلي:** فقاعات، أزرار رد سريع، قائمة خيارات، إدخال رقم/هاتف/إيميل مع تحقق، اختيار مواعيد، بطاقات الحالة والنهاية والإيقاف، ومؤشر «يكتب…».
-- **«كمّل بالمتصفح»:** الكتالوج والسلة والفورم بيفتحوا بصفحة الشركة الآمنة، وبس ترجع للتطبيق الشات بيكمّل.
+- **الطلبات أصلية (0.2):** القائمة (بحث وأصناف وخيارات وكمية بالربع كيلو)، السلة، فورم الطلب (التوصيل والمنطقة والعنوان والوقت)، ونتائج باحث المنتجات، كلها جوّا التطبيق بلا متصفح.
+- **شو بيضل بالمتصفح؟** بس السؤال السري (كلمة سر، PIN) لأنو ما لازم يمرق من التطبيق أبداً، فبينفتح بمتصفح النظام (مو WebView)، وأي نوع خطوة جديد ما بتعرفه نسختك.
 - **بلا إنترنت:** الرسالة بتستنى بطابور وبتنبعت لحالها لما يرجع النت، وما بتتنفذ مرتين.
-- **جرّب بلا حساب:** `MockTransport` فيه محادثة مخبز ومحادثة عيادة كاملين.
+- **جرّب بلا حساب:** `MockTransport` فيه محادثة مخبز ومحادثة عيادة ومتجر موبايلات كاملين.
 - **ترخيص MIT.**
 
 </div>

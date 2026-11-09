@@ -151,6 +151,17 @@ class RaselnaChatController extends ChangeNotifier {
   Future<void> chooseSlot(SlotOption slot) =>
       _send(OptionReply(slot.id), echo: slot.label);
 
+  /// Sends a rich-step action (add to cart, change a quantity, submit a
+  /// form, pick a finder result). [echo] is the customer's line on screen.
+  Future<void> act(ActionReply action, {required String echo}) =>
+      _send(action, echo: echo);
+
+  /// The rich step on screen: the current prompt, or the last one while an
+  /// answer is on its way (kept visible, disabled), so sheets stay open
+  /// between two adds.
+  Prompt? get richPrompt => _lastRich;
+  Prompt? _lastRich;
+
   /// Answers an input question (or types a menu option's number).
   Future<void> sendText(String text, {String? echo}) =>
       _send(TextReply(text), echo: echo ?? text);
@@ -171,6 +182,7 @@ class RaselnaChatController extends ChangeNotifier {
     await _saveQueue();
     _entries.clear();
     _prompt = const NonePrompt();
+    _lastRich = null;
     _handoffOpen = false;
     await _run(transport.start);
   }
@@ -316,6 +328,7 @@ class RaselnaChatController extends ChangeNotifier {
     await transport.reset();
     _entries.clear();
     _prompt = const NonePrompt();
+    _lastRich = null;
     _phase = ChatPhase.idle;
     _handoffOpen = false;
     _notify();
@@ -425,6 +438,7 @@ class RaselnaChatController extends ChangeNotifier {
     }
     _typing = false;
     _prompt = turn.prompt;
+    _lastRich = turn.prompt.isRichNative ? turn.prompt : null;
     _notify();
   }
 
@@ -537,10 +551,36 @@ class _Queued {
     final e = j['e'];
     if (k is! String || i is! String || b is! Map || e is! String) return null;
     final ReplyBody body;
+    final action = b['action'];
     if (b['option_id'] is String) {
       body = OptionReply(b['option_id'] as String);
     } else if (b['text'] is String) {
       body = TextReply(b['text'] as String);
+    } else if (action is Map && action['type'] is String) {
+      final values = action['values'];
+      body = ActionReply(
+        action['type'] as String,
+        product:
+            action['product'] is String ? action['product'] as String : null,
+        line: action['line'] is String ? action['line'] as String : null,
+        qty: action['qty'] is num ? action['qty'] as num : null,
+        options:
+            action['options'] is List
+                ? [
+                  for (final o
+                      in (action['options'] as List).whereType<String>())
+                    o,
+                ]
+                : null,
+        values:
+            values is Map
+                ? {
+                  for (final e in values.entries)
+                    if (e.key is String && e.value is String)
+                      e.key as String: e.value as String,
+                }
+                : null,
+      );
     } else {
       return null;
     }

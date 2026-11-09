@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:raselna_chat/raselna_chat.dart';
@@ -9,21 +10,29 @@ import 'package:raselna_chat/raselna_chat.dart';
 /// bot with your publishable key.
 ///
 /// On the web, `?shot=<name>` opens a chat state directly (used for the
-/// README screenshots): welcome, menu, catalog, slots, confirm, dark.
+/// README screenshots): welcome, menu, catalog, sheet, product, cart,
+/// checkout, finder, slots, confirm, dark.
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final binding = WidgetsFlutterBinding.ensureInitialized();
   final shot = Uri.base.queryParameters['shot'];
   if (shot != null) {
+    // Semantics on, so the capture script can tap buttons by their label.
+    binding.ensureSemantics();
     runApp(ShotApp(shot: shot));
     return;
   }
   await RaselnaChat.init(
     accessKey: 'rpk_test_demo',
-    transport: MockTransport(),
+    transport: MockTransport(imageBase: demoImages),
     store: MemoryStore(),
   );
   runApp(const DemoApp());
 }
+
+/// The demo product pictures (example/assets/products). Served as plain
+/// files on the web build; on a phone the mock shows letter tiles instead.
+final String? demoImages =
+    kIsWeb ? Uri.base.resolve('assets/assets/products').toString() : null;
 
 const _ink = Color(0xFF202060);
 const _indigo = Color(0xFF4B4BC8);
@@ -62,7 +71,7 @@ class _DemoAppState extends State<DemoApp> {
       } else {
         await RaselnaChat.init(
           accessKey: 'rpk_test_demo',
-          transport: MockTransport(scenario: _scenario),
+          transport: MockTransport(scenario: _scenario, imageBase: demoImages),
           store: MemoryStore(),
           themeMode: _dark ? ThemeMode.dark : ThemeMode.light,
         );
@@ -118,6 +127,11 @@ class _DemoAppState extends State<DemoApp> {
                         value: MockScenario.clinic,
                         label: Text('عيادة'),
                         icon: Icon(Icons.medical_services_outlined),
+                      ),
+                      ButtonSegment(
+                        value: MockScenario.store,
+                        label: Text('متجر'),
+                        icon: Icon(Icons.smartphone_outlined),
                       ),
                     ],
                     selected: {_scenario},
@@ -227,6 +241,7 @@ class _ShotAppState extends State<ShotApp> {
 
   MockScenario get _scenario => switch (widget.shot) {
     'welcome' || 'slots' || 'confirm' => MockScenario.clinic,
+    'finder' => MockScenario.store,
     _ => MockScenario.bakery,
   };
 
@@ -238,6 +253,7 @@ class _ShotAppState extends State<ShotApp> {
         scenario: _scenario,
         latency: Duration.zero,
         typing: false,
+        imageBase: demoImages,
       ),
       animateTyping: false,
     );
@@ -250,9 +266,38 @@ class _ShotAppState extends State<ShotApp> {
     Future<void> pick(int i) => c.choose((c.prompt as MenuPrompt).options[i]);
     Future<void> slot(int g, int i) =>
         c.chooseSlot((c.prompt as SlotsPrompt).groups[g].options[i]);
+    Future<void> cart() async {
+      await pick(0);
+      await c.act(
+        const ActionReply(
+          'add',
+          product: 'p.croissant',
+          qty: 2,
+          options: ['o.cheese'],
+        ),
+        echo: '➕ 2 × كرواسون زعتر',
+      );
+      await c.act(
+        const ActionReply('add', product: 'p.maamoul', qty: 0.75),
+        echo: '➕ 0.75 × معمول بالتمر',
+      );
+      await c.act(const ActionReply('done'), echo: 'عرض السلة');
+    }
+
     switch (widget.shot) {
-      case 'catalog':
+      case 'catalog' || 'sheet' || 'product':
         await pick(0);
+      case 'cart':
+        await cart();
+      case 'checkout':
+        await cart();
+        await c.act(const ActionReply('confirm'), echo: 'تأكيد الطلب');
+      case 'finder':
+        await pick(0);
+        await c.act(
+          const ActionReply('submit', values: {'min': '150', 'max': '400'}),
+          echo: '150 – 400',
+        );
       case 'slots':
         await pick(0);
         await pick(0);
@@ -265,10 +310,22 @@ class _ShotAppState extends State<ShotApp> {
         await c.sendText('سلمى الأحمد');
         await c.sendText('0991234567');
       case 'dark':
-        await pick(0);
-        await c.openHandoff();
-        await c.sendText('0991234567');
-        await pick(0);
+        await cart();
+        await c.act(const ActionReply('confirm'), echo: 'تأكيد الطلب');
+        await c.act(
+          const ActionReply(
+            'submit',
+            values: {
+              'fulfillment': 'delivery',
+              'zone': 'z.mazzeh',
+              'address': 'المزة، شارع الجلاء، بناية 4',
+              'time': 'asap',
+              'name': 'سلمى',
+              'phone': '0991234567',
+            },
+          ),
+          echo: '📝 أرسلت بيانات الطلب',
+        );
     }
     if (mounted) setState(() {});
   }

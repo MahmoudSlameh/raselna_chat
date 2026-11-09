@@ -9,6 +9,7 @@ import 'bubbles.dart';
 import 'composer.dart';
 import 'header.dart';
 import 'prompts.dart';
+import 'shop.dart';
 
 /// The chat screen. Put it anywhere (a tab, a page, a sheet). With no
 /// [controller] it uses the one `RaselnaChat.init` created.
@@ -254,6 +255,7 @@ class _Body extends StatelessWidget {
 
     final entries = ctl.entries;
     final prompt = ctl.prompt;
+    final rich = _shownRich;
     final botName = ctl.config?.botName ?? '';
     final items = <Widget>[
       SystemLine(text: _today()),
@@ -299,6 +301,12 @@ class _Body extends StatelessWidget {
         ],
         _ => const <Widget>[],
       },
+      if (rich != null)
+        _richCard(
+          context,
+          rich,
+          enabled: rich.isRichNative && identical(rich, prompt),
+        ),
     ];
 
     // Reversed, so the newest line sits at the bottom and the list keeps
@@ -318,7 +326,10 @@ class _Body extends StatelessWidget {
     final ready = ctl.phase == ChatPhase.ready;
 
     Widget? bar;
-    if (ready) {
+    final rich = _shownRich;
+    if (ready && rich != null) {
+      bar = _richBar(context, rich, enabled: identical(rich, prompt));
+    } else if (ready) {
       bar = switch (prompt) {
         InputPrompt(:final inputKind, :final placeholder, :final progress) =>
           Column(
@@ -382,7 +393,11 @@ class _Body extends StatelessWidget {
             ReplyChip(label: strings.restart, onTap: ctl.restart),
           ],
         ),
-        SlotsPrompt() || HandoffPrompt() => null,
+        SlotsPrompt() ||
+        HandoffPrompt() ||
+        ProductListPrompt() ||
+        CartPrompt() ||
+        FormPrompt() => null,
         NonePrompt() => Composer(
           strings: strings,
           enabled: false,
@@ -431,6 +446,242 @@ class _Body extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// The rich step to draw: the live prompt, or the last one (disabled)
+  /// while an answer is on its way.
+  Prompt? get _shownRich {
+    final ctl = controller;
+    if (ctl.prompt.isRichNative) return ctl.prompt;
+    if (ctl.isBusy || ctl.queuedCount > 0) return ctl.richPrompt;
+    return null;
+  }
+
+  RaselnaShopStrings get _s => strings.shop;
+
+  Widget _richCard(BuildContext context, Prompt rich, {required bool enabled}) {
+    final ctl = controller;
+    return switch (rich) {
+      final ProductListPrompt p when p.isPick => PickResults(
+        prompt: p,
+        strings: strings,
+        onDetails:
+            (product) => _openPick(context, p, product, enabled: enabled),
+        onSelect: enabled ? (product) => _select(product) : null,
+      ),
+      final ProductListPrompt p => CatalogCard(
+        prompt: p,
+        strings: strings,
+        onBrowse: () => _openCatalog(context),
+      ),
+      final CartPrompt p => CartCard(
+        prompt: p,
+        strings: strings,
+        onQty:
+            enabled
+                ? (line, q) => ctl.act(
+                  q <= 0
+                      ? ActionReply('remove', line: line.id)
+                      : ActionReply('set_qty', line: line.id, qty: q),
+                  echo:
+                      q <= 0
+                          ? _s.removed.replaceAll('{name}', line.name)
+                          : _s.changed
+                              .replaceAll('{name}', line.name)
+                              .replaceAll('{qty}', qtyText(q)),
+                )
+                : null,
+      ),
+      final FormPrompt p when p.isRange => RangeCard(
+        prompt: p,
+        strings: strings,
+        onSubmit:
+            enabled
+                ? (min, max) => ctl.act(
+                  ActionReply('submit', values: {'min': min, 'max': max}),
+                  echo:
+                      min.isNotEmpty && max.isNotEmpty
+                          ? '$min – $max'
+                          : min.isNotEmpty
+                          ? '${_s.from} $min'
+                          : max.isNotEmpty
+                          ? '${_s.to} $max'
+                          : _s.anyRange,
+                )
+                : null,
+      ),
+      final FormPrompt p => FormCard(
+        prompt: p,
+        strings: strings,
+        onOpen: enabled ? () => _openForm(context, p) : null,
+      ),
+      _ => const SizedBox.shrink(),
+    };
+  }
+
+  Widget? _richBar(BuildContext context, Prompt rich, {required bool enabled}) {
+    final ctl = controller;
+    switch (rich) {
+      case final ProductListPrompt p when p.isPick:
+        return Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            if (p.hasMore)
+              ShopButton(
+                label: p.moreLabel ?? _s.more,
+                onTap:
+                    enabled
+                        ? () => ctl.act(
+                          const ActionReply('more'),
+                          echo: p.moreLabel ?? _s.more,
+                        )
+                        : null,
+              ),
+            ShopButton(
+              label: p.restartLabel ?? _s.startOver,
+              primary: false,
+              onTap:
+                  enabled
+                      ? () => ctl.act(
+                        const ActionReply('restart'),
+                        echo: p.restartLabel ?? _s.startOver,
+                      )
+                      : null,
+            ),
+            if (p.contactLabel != null)
+              ShopButton(
+                label: p.contactLabel!,
+                primary: false,
+                onTap:
+                    enabled
+                        ? () => ctl.act(
+                          const ActionReply('contact'),
+                          echo: p.contactLabel!,
+                        )
+                        : null,
+              ),
+          ],
+        );
+      case final ProductListPrompt p:
+        return CatalogBar(
+          prompt: p,
+          strings: strings,
+          onBrowse: () => _openCatalog(context),
+          onDone:
+              enabled
+                  ? () => ctl.act(
+                    const ActionReply('done'),
+                    echo: p.doneLabel ?? _s.cart,
+                  )
+                  : null,
+        );
+      case final CartPrompt p:
+        return Row(
+          children: [
+            Expanded(
+              child: ShopButton(
+                label: p.moreLabel ?? _s.menu,
+                primary: false,
+                onTap:
+                    enabled
+                        ? () => ctl.act(
+                          const ActionReply('more'),
+                          echo: p.moreLabel ?? _s.menu,
+                        )
+                        : null,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: ShopButton(
+                label: p.confirmLabel ?? _s.sendOrder,
+                onTap:
+                    enabled && p.canCheckout
+                        ? () => ctl.act(
+                          const ActionReply('confirm'),
+                          echo: p.confirmLabel ?? _s.sendOrder,
+                        )
+                        : null,
+              ),
+            ),
+          ],
+        );
+      default:
+        return null;
+    }
+  }
+
+  Future<void> _openCatalog(BuildContext context) => showChatSheet<void>(
+    context,
+    colors: colors,
+    direction: direction,
+    builder:
+        (_) => CatalogSheet(
+          controller: controller,
+          strings: strings,
+          onOpenProduct: _openProduct,
+        ),
+  );
+
+  Future<void> _openProduct(BuildContext sheetContext, Product product) async {
+    final pick = await showChatSheet<ProductPick>(
+      sheetContext,
+      colors: colors,
+      direction: direction,
+      heightFactor: 0.85,
+      builder: (_) => ProductSheet(product: product, strings: _s),
+    );
+    if (pick == null) return;
+    await controller.act(
+      ActionReply(
+        'add',
+        product: product.id,
+        qty: pick.qty,
+        options: pick.options,
+      ),
+      echo: _s.added
+          .replaceAll('{qty}', qtyText(pick.qty))
+          .replaceAll('{name}', product.name),
+    );
+  }
+
+  Future<void> _openPick(
+    BuildContext context,
+    ProductListPrompt p,
+    Product product, {
+    required bool enabled,
+  }) async {
+    final chosen = await showChatSheet<bool>(
+      context,
+      colors: colors,
+      direction: direction,
+      builder:
+          (_) => PickDetails(
+            product: product,
+            strings: _s,
+            selectLabel: p.selectLabel ?? _s.choose,
+            enabled: enabled,
+          ),
+    );
+    if (chosen == true) await _select(product);
+  }
+
+  Future<void> _select(Product product) => controller.act(
+    ActionReply('select', product: product.id),
+    echo: _s.chose.replaceAll('{name}', product.name),
+  );
+
+  Future<void> _openForm(BuildContext context, FormPrompt p) async {
+    final values = await showChatSheet<Map<String, String>>(
+      context,
+      colors: colors,
+      direction: direction,
+      builder: (_) => FormSheet(prompt: p, strings: strings),
+    );
+    if (values == null) return;
+    await controller.act(ActionReply('submit', values: values), echo: _s.sent);
   }
 
   String _today() => direction == TextDirection.rtl ? 'اليوم' : 'Today';

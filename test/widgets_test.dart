@@ -266,46 +266,46 @@ void main() {
     expect(t.continues, 1);
   });
 
-  testWidgets('catalog: a "continue in browser" card opens the one-time link', (
-    tester,
-  ) async {
-    final opened = <Uri>[];
-    final t = FakeTransport(
-      onStart:
-          () => turn(
-            Prompt.fromJson({
-              'kind': 'product_list',
-              'products': List.filled(12, {}),
+  testWidgets(
+    'a secret step: the "continue in browser" card opens the one-time link',
+    (tester) async {
+      final opened = <Uri>[];
+      final t = FakeTransport(
+        onStart:
+            () => ChatTurn.fromJson({
+              'messages': [],
+              'prompt': {'kind': 'input', 'input_type': 'password'},
+              'handoff': {'required': true, 'reason': 'secret'},
             }),
-          ),
-    );
-    await pumpChat(
-      tester,
-      t,
-      openUrl: (u) async {
-        opened.add(u);
-        return true;
-      },
-    );
-    expect(find.text('هالخطوة بتكمل بصفحة آمنة'), findsOneWidget);
-    expect(find.text('12 منتج'), findsOneWidget);
-    await tester.tap(find.text('متابعة بالمتصفح'));
-    await tester.pumpAndSettle();
-    expect(t.handoffs, 1);
-    expect(opened.single.toString(), 'https://bakery.raselna.com/#h=abc');
-    // Waiting for the customer to come back.
-    expect(find.text('رجعت؟ كمّل'), findsOneWidget);
+      );
+      await pumpChat(
+        tester,
+        t,
+        openUrl: (u) async {
+          opened.add(u);
+          return true;
+        },
+      );
+      expect(find.text('هالخطوة بتكمل بصفحة آمنة'), findsOneWidget);
+      expect(find.byType(TextField), findsNothing);
+      await tester.tap(find.text('متابعة بالمتصفح'));
+      await tester.pumpAndSettle();
+      expect(t.handoffs, 1);
+      expect(opened.single.toString(), 'https://bakery.raselna.com/#h=abc');
+      // Waiting for the customer to come back.
+      expect(find.text('رجعت؟ كمّل'), findsOneWidget);
 
-    // Back in the app: the next question is native again.
-    t.currentTurn = turn(const InputPrompt(inputKind: InputKind.phone), [
-      'وصلتنا سلتك',
-    ]);
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-    await tester.pumpAndSettle();
-    expect(find.text('وصلتنا سلتك'), findsOneWidget);
-    expect(find.byType(TextField), findsOneWidget);
-  });
+      // Back in the app: the next question is native again.
+      t.currentTurn = turn(const InputPrompt(inputKind: InputKind.phone), [
+        'وصلتنا سلتك',
+      ]);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(find.text('وصلتنا سلتك'), findsOneWidget);
+      expect(find.byType(TextField), findsOneWidget);
+    },
+  );
 
   testWidgets('a secret input never shows a native field', (tester) async {
     await pumpChat(

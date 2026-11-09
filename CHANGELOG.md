@@ -1,3 +1,18 @@
+## 0.2.0
+
+Rich steps are native: the app no longer opens a browser except for secret questions.
+
+- **Catalogue** (`product_list`): in-chat card and a sheet with search, category tabs, product rows (picture, price, unit, sold out), a product sheet with option groups and a quantity stepper that follows the product's step; cart count and total in a bottom bar. The sheet stays open between adds.
+- **Cart** (`cart`): lines with options and the server's totals, −/+ steppers (bin at the minimum), add more, confirm.
+- **Checkout form** (`form`): opens by itself; choice (with hints), text, textarea and phone fields, `show_if`, required and phone checks on the device, the server's per-field errors.
+- **Product finder**: results (`product_list`, mode `pick`) as swipeable cards with a details sheet and gallery; price range (`form`, mode `range`).
+- New `ActionReply` (rich-step actions) and `RaselnaChatController.act()`; actions go through the offline queue with a fixed idempotency key like any reply.
+- `X-Raselna-Capabilities: product_list,product_list.pick,cart,form,form.range,slots` (chat API 1.1, `raselnaCapabilities`); an unknown mode of a known kind hands off.
+- A turn flagged `handoff.reason = rich_step` stays native; `secret` always opens the system browser (never a WebView, never native); unknown kinds still open the browser.
+- New `RaselnaShopStrings` (Arabic and English) under `RaselnaStrings.shop`.
+- `MockTransport`: the bakery now runs the native catalogue, cart and checkout; new `MockScenario.store` (finder); optional `imageBase` for demo pictures.
+- Example app: store demo, product pictures on the web build.
+
 ## 0.1.1
 
 - Automated publishing: pushing a `v*` tag publishes to pub.dev from GitHub Actions with pub.dev's OIDC login (no stored token). See "Releasing" in the README.

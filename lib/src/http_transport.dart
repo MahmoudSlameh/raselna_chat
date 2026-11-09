@@ -205,6 +205,7 @@ class HttpTransport extends RaselnaTransport {
       'Accept-Language': locale,
       'X-Raselna-Key': accessKey,
       'X-Raselna-SDK': 'flutter/$raselnaSdkVersion',
+      'X-Raselna-Capabilities': raselnaCapabilities.join(','),
       if (appId != null) 'X-Raselna-App': appId!,
       ...headers,
     });

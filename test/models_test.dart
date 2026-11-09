@@ -61,27 +61,176 @@ void main() {
       expect((secret as HandoffPrompt).reason, HandoffReason.secret);
     });
 
-    test('rich and unknown kinds become a handoff, never a crash', () {
+    test('unknown modes of known kinds also hand off', () {
+      final list = Prompt.fromJson({
+        'kind': 'product_list',
+        'mode': 'compare',
+        'products': [],
+      });
+      expect((list as HandoffPrompt).kind, 'product_list');
       expect(
-        (Prompt.fromJson({
-                  'kind': 'product_list',
-                  'products': [{}, {}],
-                })
-                as HandoffPrompt)
-            .count,
-        2,
+        Prompt.fromJson({'kind': 'form', 'mode': 'wizard', 'fields': []}),
+        isA<HandoffPrompt>(),
       );
-      expect(
-        (Prompt.fromJson({'kind': 'cart'}) as HandoffPrompt).reason,
-        HandoffReason.cart,
-      );
-      expect(
-        (Prompt.fromJson({'kind': 'form'}) as HandoffPrompt).reason,
-        HandoffReason.form,
-      );
+    });
+
+    test('unknown kinds become a handoff, never a crash', () {
       final future = Prompt.fromJson({'kind': 'hologram_3d'}) as HandoffPrompt;
       expect(future.reason, HandoffReason.unknown);
       expect(future.kind, 'hologram_3d');
+    });
+
+    test('product_list: categories, products, options, cart, pick mode', () {
+      final p =
+          Prompt.fromJson({
+                'kind': 'product_list',
+                'categories': [
+                  {'id': 'c1', 'name': 'معجنات'},
+                ],
+                'products': [
+                  {
+                    'id': 'p1',
+                    'category': 'c1',
+                    'name': 'معمول',
+                    'price': '120,000 ل.س',
+                    'unit': 'كيلو',
+                    'step': 0.25,
+                    'max': 5,
+                    'image_url': 'javascript:alert(1)',
+                    'available': true,
+                    'groups': [
+                      {
+                        'name': 'الحشوة',
+                        'required': true,
+                        'choices': [
+                          {'id': 'o1', 'name': 'تمر'},
+                          {'id': 'o2', 'name': 'جوز', 'price': '+5,000'},
+                        ],
+                      },
+                    ],
+                  },
+                  {'name': 'no id', 'groups': []},
+                ],
+                'cart': {'count': 3, 'total': '45,000 ل.س'},
+                'done_label': 'عرض السلة',
+              })
+              as ProductListPrompt;
+      expect(p.isPick, isFalse);
+      expect(p.products, hasLength(1));
+      final m = p.products.single;
+      expect(m.step, 0.25);
+      expect(m.imageUrl, isNull, reason: 'non-http images are dropped');
+      expect(m.groups.single.required, isTrue);
+      expect(m.groups.single.choices.last.price, '+5,000');
+      expect(p.cartCount, 3);
+      expect(p.cartTotal, '45,000 ل.س');
+      expect(p.isRichNative, isTrue);
+
+      final pick =
+          Prompt.fromJson({
+                'kind': 'product_list',
+                'mode': 'pick',
+                'categories': [],
+                'products': [
+                  {
+                    'id': 'x',
+                    'name': 'نوفا',
+                    'images': ['https://a.example/1.webp', 'ftp://bad'],
+                    'attributes': [
+                      {'label': 'الشاشة', 'value': '6.5'},
+                    ],
+                    'groups': [],
+                  },
+                ],
+                'cart': {},
+                'has_more': true,
+                'total': 9,
+              })
+              as ProductListPrompt;
+      expect(pick.isPick, isTrue);
+      expect(pick.hasMore, isTrue);
+      expect(pick.total, 9);
+      expect(pick.products.single.images, ['https://a.example/1.webp']);
+      expect(pick.products.single.attributes.single.value, '6.5');
+    });
+
+    test('cart and forms', () {
+      final cart =
+          Prompt.fromJson({
+                'kind': 'cart',
+                'lines': [
+                  {
+                    'id': 'l1',
+                    'name': 'كعك',
+                    'qty': 2,
+                    'step': 1,
+                    'max': 10,
+                    'total': '16,000',
+                  },
+                ],
+                'subtotal': '16,000',
+                'can_checkout': true,
+              })
+              as CartPrompt;
+      expect(cart.lines.single.qty, 2);
+      expect(cart.canCheckout, isTrue);
+
+      final form =
+          Prompt.fromJson({
+                'kind': 'form',
+                'fields': [
+                  {
+                    'name': 'fulfillment',
+                    'type': 'choice',
+                    'label': 'الاستلام',
+                    'required': true,
+                    'options': [
+                      {'id': 'delivery', 'label': 'توصيل', 'hint': '5,000'},
+                    ],
+                  },
+                  {
+                    'name': 'address',
+                    'type': 'textarea',
+                    'label': 'العنوان',
+                    'show_if': {'field': 'fulfillment', 'value': 'delivery'},
+                    'error': 'قصير',
+                  },
+                  {'name': 'where', 'type': 'location', 'label': 'الموقع'},
+                ],
+                'summary': [
+                  {'label': 'المجموع', 'value': '16,000'},
+                ],
+              })
+              as FormPrompt;
+      expect(form.fields[0].options.single.hint, '5,000');
+      expect(form.fields[1].showIfField, 'fulfillment');
+      expect(
+        form.fields[2].type,
+        FormFieldKind.text,
+        reason: 'unknown types are text',
+      );
+      expect(form.hasErrors, isTrue);
+      expect(form.isRange, isFalse);
+      expect(
+        (Prompt.fromJson({
+                  'kind': 'form',
+                  'mode': 'range',
+                  'fields': [],
+                  'summary': [],
+                })
+                as FormPrompt)
+            .isRange,
+        isTrue,
+      );
+    });
+
+    test('ActionReply JSON omits empty parts', () {
+      expect(const ActionReply('done').toJson(), {
+        'action': {'type': 'done'},
+      });
+      expect(const ActionReply('set_qty', line: 'l1', qty: 3).toJson(), {
+        'action': {'type': 'set_qty', 'line': 'l1', 'qty': 3},
+      });
     });
 
     test('slots, end, paused, none', () {

@@ -2,7 +2,7 @@ name: raselna_chat
 description: >-
   Arabic-first, right-to-left chat UI for Flutter apps. Add a publishable
   key and your app talks to a business's Raselna bot: orders, bookings, support.
-version: 0.1.1
+version: 0.2.0
 homepage: https://raselna.com
 repository: https://github.com/MahmoudSlameh/raselna_chat
 issue_tracker: https://github.com/MahmoudSlameh/raselna_chat/issues
@@ -19,10 +19,14 @@ platforms:
   web:
 
 screenshots:
-  - description: Booking time slots in Arabic (right to left)
-    path: doc/slots.png
-  - description: Order confirmation in dark mode
-    path: doc/dark.png
+  - description: Native catalogue in Arabic (right to left)
+    path: doc/sheet.webp
+  - description: Cart with quantity steppers
+    path: doc/cart.webp
+  - description: Checkout form
+    path: doc/checkout.webp
+  - description: Booking time slots
+    path: doc/slots.webp
 
 environment:
   sdk: ^3.7.0
