@@ -15,19 +15,25 @@ class ChatTurn {
   factory ChatTurn.fromJson(Map<String, dynamic> json) {
     final raw = json['messages'];
     var prompt = Prompt.fromJson(_map(json['prompt']));
-    // A secret question always continues on the secure web page (system
-    // browser), whatever its kind. A rich step the SDK draws natively stays
-    // native even if an older server flags it for the browser; anything
-    // else the server sends to the browser goes there.
+    // The server decides: with the right X-Raselna-Capabilities it sends no
+    // handoff for the rich steps this SDK draws. A secret question always
+    // continues on the secure web page (system browser), whatever its kind.
     final handoff = _map(json['handoff']);
     if (handoff['reason'] == 'secret') {
       if (prompt is! HandoffPrompt || prompt.reason != HandoffReason.secret) {
         prompt = HandoffPrompt(kind: prompt.kind, reason: HandoffReason.secret);
       }
-    } else if (handoff['required'] == true &&
-        prompt is! HandoffPrompt &&
-        !prompt.isRichNative) {
-      prompt = HandoffPrompt(kind: prompt.kind, reason: HandoffReason.unknown);
+    } else if (handoff['required'] == true && prompt is! HandoffPrompt) {
+      prompt = HandoffPrompt(
+        kind: prompt.kind,
+        reason: switch (prompt) {
+          ProductListPrompt() => HandoffReason.catalog,
+          CartPrompt() => HandoffReason.cart,
+          FormPrompt() => HandoffReason.form,
+          _ => HandoffReason.unknown,
+        },
+        count: prompt is ProductListPrompt ? prompt.products.length : null,
+      );
     }
     final conv = _map(json['conversation']);
     return ChatTurn(
@@ -443,8 +449,9 @@ class NonePrompt extends Prompt {
   String get kind => 'none';
 }
 
-/// Why a step opens the browser. Since 0.2.0 only [secret] and [unknown]
-/// are produced; catalogue, cart and form are drawn natively.
+/// Why a step opens the browser: a secret question, a step this version
+/// doesn't know, or a rich step the server chose to hand off (it does not
+/// for the kinds in `raselnaCapabilities`).
 enum HandoffReason { catalog, cart, form, secret, unknown }
 
 /// A rich or sensitive step that continues on the business's secure web

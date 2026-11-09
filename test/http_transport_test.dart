@@ -196,11 +196,17 @@ void main() {
   });
 
   test(
-    'rich steps stay native even when flagged rich_step; secret goes to the browser',
+    'declared rich steps are native; the server\'s handoff (rich_step, secret) wins',
     () async {
       await store.write('device', _device);
-      final catalog =
+      final handedOff =
           await transport((r) async => ok('turn_catalog')).current();
+      final h = handedOff!.prompt as HandoffPrompt;
+      expect(h.reason, HandoffReason.catalog);
+      expect(h.count, 2);
+
+      final catalog =
+          await transport((r) async => ok('turn_catalog_native')).current();
       final c = catalog!.prompt as ProductListPrompt;
       expect(c.products, hasLength(2));
       expect(c.products.first.name, 'كرواسون زعتر');

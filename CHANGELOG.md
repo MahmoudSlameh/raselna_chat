@@ -8,7 +8,7 @@ Rich steps are native: the app no longer opens a browser except for secret quest
 - **Product finder**: results (`product_list`, mode `pick`) as swipeable cards with a details sheet and gallery; price range (`form`, mode `range`).
 - New `ActionReply` (rich-step actions) and `RaselnaChatController.act()`; actions go through the offline queue with a fixed idempotency key like any reply.
 - `X-Raselna-Capabilities: product_list,product_list.pick,cart,form,form.range,slots` (chat API 1.1, `raselnaCapabilities`); an unknown mode of a known kind hands off.
-- A turn flagged `handoff.reason = rich_step` stays native; `secret` always opens the system browser (never a WebView, never native); unknown kinds still open the browser.
+- The server's `handoff` decides: with the declared capabilities it sends none for these kinds; `secret` always opens the system browser (never a WebView, never native); unknown kinds and modes still open the browser.
 - New `RaselnaShopStrings` (Arabic and English) under `RaselnaStrings.shop`.
 - `MockTransport`: the bakery now runs the native catalogue, cart and checkout; new `MockScenario.store` (finder); optional `imageBase` for demo pictures.
 - Example app: store demo, product pictures on the web build.

@@ -61,6 +61,18 @@ void main() {
       expect((secret as HandoffPrompt).reason, HandoffReason.secret);
     });
 
+    test('the server\'s handoff wins for rich steps too', () {
+      final t = ChatTurn.fromJson({
+        'prompt': {'kind': 'cart', 'lines': []},
+        'handoff': {'required': true, 'reason': 'rich_step'},
+      });
+      expect((t.prompt as HandoffPrompt).reason, HandoffReason.cart);
+      final native = ChatTurn.fromJson({
+        'prompt': {'kind': 'cart', 'lines': []},
+      });
+      expect(native.prompt, isA<CartPrompt>());
+    });
+
     test('unknown modes of known kinds also hand off', () {
       final list = Prompt.fromJson({
         'kind': 'product_list',
